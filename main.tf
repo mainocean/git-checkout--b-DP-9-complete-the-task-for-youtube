@@ -1,58 +1,83 @@
-provider "aws" {}
+#------------------------------------------------------------
+#  My Terraform
+#
+#  Made by Alex
+#------------------------------------------------------------
 
-data "aws_availability_zones" "working" {}
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-data "aws_vpcs" "my_vpcs" {}
-data "aws_vpc" "prod_vpc" {}
+provider "aws" {
+
+}
+
+resource "aws_security_group" "my_webserver" {
+  name = "My Security Group"
 
 
-resource "aws_subnet" "prod_subnet_1" {
-  vpc_id            = data.aws_vpc.prod_vpc.id
-  availability_zone = data.aws_availability_zones.working.names[0]
-  cidr_block        = "172.31.1.0/24"
+  dynamic "ingress" {
+    for_each = ["80", "443", "8080", "1541"]
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+
+    }
+
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.10.0.0/16"]
+
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
   tags = {
-    Name    = "Subnet-1 in ${data.aws_availability_zones.working.names[0]}"
-    Account = "Subnet in ${data.aws_caller_identity.current.account_id}"
-    Region  = data.aws_region.current.description
+    Name = "Dynamic Security terraform"
   }
 }
 
-/*resource "aws_subnet" "prod_subnet_2" {
-  vpc_id            = data.aws_vpc.prod_vpc.id
-  availability_zone = data.aws_availability_zones.working.names[1]
-  cidr_block        = ""
+resource "aws_instance" "my_server_web" {
+  ami                    = "ami-099da3ad959447ffa" #  Amazon_Linux2023
+  instance_type          = "t3.micro"
+  vpc_security_group_ids = [aws_security_group.my_webserver.id]
+
   tags = {
-    Name    = "Subnet-2 in ${data.aws_availability_zones.working.names[1]}"
-    Account = "Subnet in ${data.aws_caller_identity.current.account_id}"
-    Region  = data.aws_region.current.description
+    Name  = "Server_Web"
+    Owner = "Alex DevOps"
+  }
+  depends_on = [aws_instance.my_server_db]
+}
+
+resource "aws_instance" "my_server_app" {
+  ami                    = "ami-099da3ad959447ffa" #  Amazon_Linux2023
+  instance_type          = "t3.micro"
+  vpc_security_group_ids = [aws_security_group.my_webserver.id]
+
+  tags = {
+    Name  = "Server_Application"
+    Owner = "Alex DevOps"
+  }
+  depends_on = [aws_instance.my_server_db]
+}
+
+resource "aws_instance" "my_server_db" {
+  ami                    = "ami-099da3ad959447ffa" #  Amazon_Linux2023
+  instance_type          = "t3.micro"
+  vpc_security_group_ids = [aws_security_group.my_webserver.id]
+
+  tags = {
+    Name  = "Server_Database"
+    Owner = "Alex DevOps"
   }
 }
-*/
-output "availability_zones" {
-  value = data.aws_availability_zones.working.names
-}
 
-output "data_aws_caller_identity" {
-  value = data.aws_caller_identity.current.account_id
-}
 
-output "data_aws_region_name" {
-  value = data.aws_region.current.name
-}
-
-output "data_aws_region_description" {
-  value = data.aws_region.current.description
-}
-
-output "aws_vpcs" {
-  value = data.aws_vpcs.my_vpcs.ids
-}
-
-output "prod_vpc_id" {
-  value = data.aws_vpc.prod_vpc.id
-}
-
-output "prod_vpc_cidr" {
-  value = data.aws_vpc.prod_vpc.cidr_block
-}
