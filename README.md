@@ -1,4 +1,4 @@
-
+# Procedure creating resources, and how to display data sources
 Hi! In this terraform code for YouTube video I create new projects called Resource Creation Procedure and also project Names. 
 
 I practice pulling and displaying data sources in the console. This allows you to get information that you can use to configure your resources. Using data sources is a really powerful feature because it allows you to query your existing resources and use that information in your configurations. 
@@ -9,7 +9,7 @@ For example, dependon is great for controlling the order in which resources are 
 https://www.youtube.com/watch?v=Gw5DE3DYMzk&ab_channel=DevOps
 ```
 
-Terraform commands:
+# Terraform commands:
 
 ```
 terraform init
